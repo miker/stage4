@@ -1,0 +1,12 @@
+# bashrc
+export CFLAGS="-mtune=nocona -march=nocona -O2 -pipe -fomit-frame-pointer"
+export CXXFLAGS="${CFLAGS}"
+export CHOST="x86_64-pc-linux-gnu"
+export MAKEOPTS="-j1"
+
+#ccache
+if [ -x /usr/bin/ccache ]; then
+    PATH="/usr/lib/ccache/bin/:${PATH}"
+    CCACHE_DIR="/var/tmp/ccache"
+    SANDBOX_WRITE="${SANDBOX_WRITE}:${CCACHE_DIR}"
+fi
