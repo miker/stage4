@@ -1,0 +1,24 @@
+stage4 building script ideas
+    1. specify root directory
+    2. script creates directory structure on first run
+    3. Download stage3
+    4. script runs
+    5. copies resolv.conf to chroot
+    6. mounts proc as a bind
+    7. copies secondary script into chroot 
+    8. rsync's portage to /usr/portage
+    9. chroots
+    10. Copies some template files, ie make.conf /etc/paludis /etc/portage
+        per arch basis.
+    11. emerge -s
+    12. env-update && source
+    13. emerge portage
+    14. emerge paludis
+    15. paludis rebuild everything based on cflags and use flags from templates
+    16. paludis -i stage4
+    17. paludis -i {desktop,server}
+    18. makes tarball
+    19. control back to original script removes script copied into tarball
+    20. purges any temporary files or directories
+
+Need comments.

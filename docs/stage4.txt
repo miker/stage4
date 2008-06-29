@@ -1,0 +1,380 @@
+Stage4 Installation Manual 0.3
+===============================
+Greg Fitzgerald <netzdamon@gmail.com>
+v0.3, March 2008
+
+{index}
+
+Introduction
+-----------
+Stage4 will make your installations faster by providing a basic system for 
+you to start with as well as keeping updates applied regularly. We update 
+our snapshots once a week. No more worrying about 200 packages to install 
+after a few months of a Gentoo. 
+
+We currently offer two archetectures, i686 and amd64. No plans as of right now
+to add more unless we come across some extra hardware. There are two ways the
+stag4's are delivered. We have a desktop profile that comes with xorg and a
+server profile that is more stripped down. Both come with paludis and vim
+preinstalled.
+
+Getting Started
+---------------
+
+NOTE: These instructions assume you have already booted a Gentoo Live CD or
+DVD and have a terminal open.
+
+First we need to setup our internet connection.
+
+-----------------------------------
+$ ifconfig eth0 207.5.168.94 netmask 255.255.255.252 broadcast 207.5.168.95
+$ route add -net default 207.5.168.93 netmask 0.0.0.0 metric 1 eth0
+$ echo "nameserver 207.5.171.1" > /etc/resolv.conf
+-----------------------------------
+
+Visit http://www.gregf.org/stage4/ and download the appoperiate stage4 file for
+your installation. Then extract it to your chroot directory. Usually
+/mnt/gentoo.
+
+--------------------------------------------------------------------
+$ wget http://gregf.org/stage4/stage4-amd64-06052007.tar.bz2 
+--------------------------------------------------------------------
+
+Partitions
+~~~~~~~~~~~
+
+Next is we want to fire up cfdisk and create our partitions. Below is a table
+showing our recommended partition layout. You can do it however you would like
+though.
+
+------------------
+$ cfdisk /dev/sda
+------------------
+
+.cfdisk
+image::images/cfdisk.png["cfdisk"]
+
+.Recommended Partition Scheme:
+[frame="all",grid="all"]
+`--------------`---------------------
+Mount Point	      Description
+-------------------------------------
+boot              Boot Partition
+swap              Swap Partition
+/                 Root Partition
+/usr              /usr Partition
+/tmp              /tmp Partition
+/var              /var Partition
+/usr/portage      /usr/portage Partiton
+/home	          /home Partition
+------------------------------------
+
+After you have partitioned your system you will need to mkfs on each
+partition. There are a number of options here, I will be covering ext3. The
+link:http://www.gentoo.org/doc/en/handbook/index.xml[Gentoo Handbook] has many more to read about. If you have never read the Gentoo
+Handbook I suggestion doing so.
+
+First we will create your swap partition, and turn swap on.
+
+NOTE: Make sure you use your own drive letter and partition numbers. This
+documentation assumes your drive is used only for gentoo and it is /dev/sda.
+It also assumes that you are using the partition layout we talked about
+earlier.
+
+-----------------------------------
+$ mkswap /dev/sda2
+$ swapon /dev/sda2
+$ mke2fs -j -O dir_index /dev/sda1
+$ mke2fs -j -O dir_index /dev/sda3
+$ mke2fs -j -O dir_index /dev/sda5
+$ mke2fs -j -O dir_index /dev/sda6
+$ mke2fs -j -O dir_index /dev/sda7
+$ mke2fs -j -O dir_index /dev/sda8
+$ mke2fs -j -O dir_index /dev/sda9
+-----------------------------------
+
+Now our drives are ready to mount and beging. 
+
+--------------------------------------------
+$ mount /dev/sda3 /mnt/gentoo
+$ cd /mnt/gentoo
+$ mkdir usr var tmp home boot
+$ mount /dev/sda1 /mnt/gentoo/boot
+$ mount /dev/sda5 /mnt/gentoo/var
+$ mount /dev/sda6 /mnt/gentoo/tmp
+$ mount /dev/sda7 /mnt/gentoo/usr
+$ mkdir -p /mnt/gentoo/usr/portage
+$ mount /dev/sda8 /mnt/gentoo/usr/portage
+$ mount /dev/sda9 /mnt/gentoo/home
+$ mount -t proc none /mnt/gentoo/proc
+$ mount -o bind /dev /mnt/gentoo/dev
+--------------------------------------------
+
+Now we can chroot into our system and start setting things up.
+
+--------------------------------------------------------------------
+$ tar xvjf stage4-amd64-desktop-06052007.tar.bz2 -C /mnt/gentoo
+$ cp -L /etc/resolv.conf /mnt/gentoo/etc/
+$ chroot /mnt/gentoo /bin/bash
+$ env-update && source /etc/profile
+--------------------------------------------------------------------
+
+First thing we should do now is set our localtime zone. This is how that can
+be done.
+
+---------------------------------------------------
+$ ln -s /usr/share/zoneinfo/EST5EDT /etc/localtime
+----------------------------------------------------
+
+If you need to see a list of timezone options you can just look inside the
+/usr/share/zoneinfo directory. If your on the east coast this example should
+work just fine.
+
+TIP: Syncing the tree can take a few mins this is a good time to make coffee
+
+---------------------------
+$ mkdir -p /usr/portage/.cache/names
+$ mkdir -p /usr/portage/distfiles
+$ mkdir -p /var/tmp/paludis
+$ paludis --sync
+$ chgrp -R paludisbuild /usr/portage
+$ chgrp -R paludisbuild /var/tmp/paludis
+$ find /usr/portage -type d -exec chmod g+wrx {} \;
+$ find /var/tmp/paludis -type d -exec chmod g+wrx {} \;
+---------------------------
+
+We want to allow users in the paludisbuild group to run paludis with out having to type sudo paludis each time.
+
+--------------------------------------
+$ visudo
+--------------------------------------
+
+[caption="Example 1: "]
+./etc/sudoers
+[sh]
+source~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%paludisbuild  ALL=(ALL)   NOPASSWD: /usr/bin/paludis
+source~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is a good time to make any changes to your use flags, select a video
+card, extra input devices, and most importantly set your cflags. I will give
+you a quick run down of what you need to do to get your system up and running.
+You should really go read the paludis manual before you go any further.
+
+link:http://paludis.pioto.org/[paludis website]
+
+Next you should go vist the gentoo-wiki and find out what your safe use flags
+are. link:http://gentoo-wiki.com/Safe_Cflags[Safe Cflags].
+
+Fire up vim and edit /etc/paludis/bashrc and edit your cflags and other
+options you feel the need to change. The defaults I have put together are a
+safe bet.
+
+[caption="Example 2: "]
+./etc/paludis/bashrc
+[sh]
+source~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# bashrc
+export CFLAGS="-march=nocona -O2 -pipe"
+export CXXFLAGS="${CFLAGS}"
+export CHOST="x86_64-pc-linux-gnu"
+export MAKEOPTS="-j1"
+
+#ccache
+if [ -x /usr/bin/ccache ]; then
+        export PATH="/usr/lib/ccache/bin/:${PATH}"
+        export CCACHE_DIR="/var/tmp/ccache"
+fi
+source~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Next file you will probably want to edit is /etc/paludis/use.conf. I will not
+get into details on useflags you really should read the
+link:http://www.gentoo.org/doc/en/handbook/index.xml[Gentoo Handbook] and
+link:http://paludis.pioto.org/configuration/index.html[Paludis documentation]. This is the time to start editing your useflags though.
+So go read! Then continue.
+
+Good best you'll be doing some compiling on your Gentoo system so lets setup ccache to help speed that process up a little.
+
+------------------------------
+$ ccache -M1G
+------------------------------
+
+What this does is tell ccache we want to keep a 1 Gigabyte cache in /var/tmp/ccache. 1Gig is probably overkill so choose
+based on your system resources. man ccache for more information. 
+
+This is where we will update your system to the latest sources. There should
+not be a lot since the stage4 tarballs are updated once a week, but this is
+still a good time to do so. 
+
+---------------------------------
+$ paludis -ip everything
+---------------------------------
+
+This shows us a list of all the sources paludis wants to upgrade. If theres
+anything you forgot to do do it now.
+
+----------------------------------
+$ paludis -i everything
+----------------------------------
+
+TIP: This will take a little while to upgrade the packages, were getting close now!
+
+Our next step is to install grub and a kernel. I will talk about install
+vanilla-sources but you can see a list of others in portage in
+/usr/portage/sys-kernel/ to choose from. sys-kernel/gentoo-sources is very
+popular as well.
+
+----------------------------------
+$ paludis -i gentoo-sources
+----------------------------------
+
+First we will compile our new kernel. If you saved your /proc/config.gz from a
+exist system you can copy it to your /usr/src/linux dir like the following.
+zcat /path/to/config.gz /mnt/gentoo/usr/src/linux/.config. If not you will
+need to create a new configuration as explained below.
+
+---------------------------------------------------------------
+$ cd /usr/src
+$ ln -s linux-2.6.19.7 linux
+$ cd linux
+$ make menuconfig
+$ make -j3 all && make -j3 modules_install && make install
+---------------------------------------------------------------
+
+When you run make menuconfig you will need to choose the correct options to
+configure the kernel for your system. The last step compiles it and installs
+it to /boot.
+
+Now we have a working kernel (cross your fingers) we will be configuring grub
+for our first boot. We do so as follows.
+
+NOTE: We are assuming gentoo is being installed on your first hardrive and the first
+partition. If not you will need to alter these steps
+
+------------------------------------------------------------------------------------------------
+$ grub
+Probing devices to guess BIOS drives. This may take a long time.
+
+grub> root (hd0,0)
+ Filesystem type is ext2fs, partition type 0x83
+
+grub> setup (hd0)
+ Checking if "/boot/grub/stage1" exists... yes
+ Checking if "/boot/grub/stage2" exists... yes
+ Checking if "/boot/grub/e2fs_stage1_5" exists... yes
+ Running "embed /boot/grub/e2fs_stage1_5 (hd0)"...  16 sectors are embedded.
+succeeded
+ Running "install /boot/grub/stage1 (hd0) (hd0)1+16 p (hd0,0)/boot/grub/stage2 /boot/
+grub/menu.lst"... succeeded
+Done.
+------------------------------------------------------------------------------------------------
+
+Our next step is to create a grub.conf inside /boot/grub/. You can use the
+example grub.conf.example by doing the following.
+
+----------------------------------
+$ cd /boot/grub
+$ cp grub.conf.example grub.conf
+----------------------------------
+
+Edit to match your system. Here is what mine looks like.
+
+-----------------------------------------------------------
+#
+# Sample boot menu configuration file
+#
+
+# Boot automatically after 30 secs.
+timeout 5  
+
+# By default, boot the first entry.
+default 0
+
+# Fallback to the second entry.
+fallback 1
+
+# Splash image to show behind grub.
+splashimage=(hd0,0)/boot/grub/splash.xpm.gz
+
+# For booting GNU/Linux
+title Gentoo 2.6.19.7
+root (hd0,0)
+kernel /vmlinuz ro root=/dev/sda3 vga=792
+
+# For booting Gentoo into single user mode, for rescue operations.
+title Single User Mode
+root (hd0,0)
+kernel /vmlinuz ro root=/dev/sda3 vga=792 softlevel=single init=/bin/bash
+-----------------------------------------------------------
+
+Now our final steps before our first boot. We need to set a root password,
+create a user account that can su to root, and start any services we want to
+run at boot time. First we set a root password.
+
+----------------------------------------
+$ passwd root
+New UNIX password: 
+Retype new UNIX password: 
+passwd: password updated successfully
+----------------------------------------
+
+Now we will add a user account. superadduser has been added to our stage4 so
+all we need to do is the following.
+
+-------------------------------------------------------------------------------
+$ useradd -G audio,video,users,games,wheel,paludisbuild -m -n -s /bin/bash myuser
+$ passwd myuser
+-------------------------------------------------------------------------------
+
+Just replace myuser with your desired username and follow the rest of the
+prompts as you are asked.
+
+We need to create a fstab file so our system knows what paritions map where.
+So once again fire up vim and edit /etc/fstab. If you are using the same
+partition layout we talked about throughout this install yours should look
+something like this.
+
+---------------------------------------------------------------------------------
+/dev/sda1   /boot         ext3  noauto,relatime    1 2
+/dev/sda3   /             ext3  relatime           0 2
+/dev/sda2   none          swap  sw                 0 2
+/dev/sda5   /var          ext3  relatime           0 2
+/dev/sda6   /tmp          ext3  relatime           0 2
+/dev/sda7   /usr          ext3  relatime           0 2
+/dev/sda8   /usr/portage  ext3  relatime           0 2
+/dev/sda9   /home         ext3  relatime           0 2
+/dev/cdrom    /mnt/cdrom  auto  noauto,ro,users    0 0
+/dev/fd0    /mnt/floppy   auto  noauto,users       0 0
+
+# glibc 2.2 and above expects tmpfs to be mounted at /dev/shm for 
+# POSIX shared memory (shm_open, shm_unlink).
+# (tmpfs is a dynamically expandable/shrinkable ramdisk, and will
+#  use almost no memory if not populated with files)
+shm     /dev/shm  tmpfs   nodev,nosuid,noexec 0 0
+---------------------------------------------------------------------------------
+Our final step! You will probably want to start some services upon boot. We
+will be starting sysklogd, fcron, and sshd. Here is how this works.
+
+-----------------------------------------
+$ rc-update add sysklogd default
+$ rc-update add fcron default
+$ rc-update add sshd default
+-----------------------------------------
+
+We are ready to umount our drives now and reboot. You will want to exit your
+chroot bye hitting ctrl-d or typing exit a few times. Then umount each
+partition in reverse order. Do not forget to umount /gentoo/proc and run
+swapoff /dev/sda2. Good luck on that first boot!
+
+NOTE: Upon your first boot xorg-x11 is all installed if you used the stage4
+desktop profile, so you can just go about installing the window manager of your choice.
+
+----------------------
+$ paludis -i openbox
+----------------------
+
+Or You can install from premade sets I have created in /etc/paludis/sets/. Take a look and edit to your needs.
+
+-----------------------
+$ paludis -i setname
+-----------------------

@@ -1,0 +1,26 @@
+Stage 4 Guidelines.
+--------------------------------------
+
+1. Initial Setup
+2. Syncing the Tree
+3. Installed Applications
+4. Updating
+5. Creating the tar.bz2
+6. Uploading
+7. Major Overhauls
+
+Initial Setup
+-----------------
+
+mkdir gentoo
+tar -xvpf stage3-amd64-2007.0.tar.bz -C gentoo/
+cp /etc/resolv.conf gentoo/etc/
+rsync -apv --exclude distfiles/ --exclude .cache/ /usr/portage gentoo/usr
+mount -o bind /dev gentoo/dev
+mount -o bind /proc gentoo/proc
+chroot gentoo /bin/bash
+env-update && source /etc/profile
+nano /etc/make.conf
+ACCEPT_KEYWORDS="~amd64"
+emerge -pv paludis
+
