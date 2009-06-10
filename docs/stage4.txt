@@ -7,16 +7,17 @@ v0.3, March 2008
 
 Introduction
 -----------
-Stage4 will make your installations faster by providing a basic system for 
-you to start with as well as keeping updates applied regularly. We update 
-our snapshots once a week. No more worrying about 200 packages to install 
-after a few months of a Gentoo. 
+Stage4 will make your installations faster by providing a basic system for
+you to start with as well as keeping updates applied regularly. We update
+our snapshots once a week. No more worrying about 200 packages to install
+after a few months of a Gentoo.
 
-We currently offer two archetectures, i686 and amd64. No plans as of right now
+We currently offer two architectures, i686 and amd64. No plans as of right now
 to add more unless we come across some extra hardware. There are two ways the
-stag4's are delivered. We have a desktop profile that comes with xorg and a
+stage4's are delivered. We have a desktop profile that comes with xorg and a
 server profile that is more stripped down. Both come with paludis and vim
 preinstalled.
+
 
 Getting Started
 ---------------
@@ -37,7 +38,7 @@ your installation. Then extract it to your chroot directory. Usually
 /mnt/gentoo.
 
 --------------------------------------------------------------------
-$ wget http://gregf.org/stage4/stage4-amd64-06052007.tar.bz2 
+$ wget http://gregf.org/stage4/stage4-amd64-06052007.tar.bz2
 --------------------------------------------------------------------
 
 Partitions
@@ -93,7 +94,7 @@ $ mke2fs -j -O dir_index /dev/sda8
 $ mke2fs -j -O dir_index /dev/sda9
 -----------------------------------
 
-Now our drives are ready to mount and beging. 
+Now our drives are ready to mount and beging.
 
 --------------------------------------------
 $ mount /dev/sda3 /mnt/gentoo
@@ -200,11 +201,11 @@ $ ccache -M1G
 ------------------------------
 
 What this does is tell ccache we want to keep a 1 Gigabyte cache in /var/tmp/ccache. 1Gig is probably overkill so choose
-based on your system resources. man ccache for more information. 
+based on your system resources. man ccache for more information.
 
 This is where we will update your system to the latest sources. There should
 not be a lot since the stage4 tarballs are updated once a week, but this is
-still a good time to do so. 
+still a good time to do so.
 
 ---------------------------------
 $ paludis -ip everything
@@ -285,7 +286,7 @@ Edit to match your system. Here is what mine looks like.
 #
 
 # Boot automatically after 30 secs.
-timeout 5  
+timeout 5
 
 # By default, boot the first entry.
 default 0
@@ -313,8 +314,8 @@ run at boot time. First we set a root password.
 
 ----------------------------------------
 $ passwd root
-New UNIX password: 
-Retype new UNIX password: 
+New UNIX password:
+Retype new UNIX password:
 passwd: password updated successfully
 ----------------------------------------
 
@@ -346,7 +347,7 @@ something like this.
 /dev/cdrom    /mnt/cdrom  auto  noauto,ro,users    0 0
 /dev/fd0    /mnt/floppy   auto  noauto,users       0 0
 
-# glibc 2.2 and above expects tmpfs to be mounted at /dev/shm for 
+# glibc 2.2 and above expects tmpfs to be mounted at /dev/shm for
 # POSIX shared memory (shm_open, shm_unlink).
 # (tmpfs is a dynamically expandable/shrinkable ramdisk, and will
 #  use almost no memory if not populated with files)
